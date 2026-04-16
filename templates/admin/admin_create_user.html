@@ -1,0 +1,572 @@
+{% extends "admin/base.html" %} {% block content %}
+
+<section class="content">
+  <div class="container-fluid py-3">
+    <!-- HEADER -->
+   <div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="font-weight-bold mb-1" style="color: #28a745;">
+      <i class="fas fa-user-plus mr-2"></i>
+      Create New User
+    </h3>
+    <small>
+      Onboard users with voucher & KYC verification
+    </small>
+  </div>
+</div>
+
+      <a href="/api/accounts/panel/users/" class="btn btn-light shadow-sm">
+        <i class="fas fa-arrow-left mr-1"></i> Back
+      </a>
+    </div>
+
+    <!-- MAIN CARD -->
+    <div class="card border-0 shadow-lg main-card">
+      <div class="card-body p-4">
+        <form id="createUserForm">
+          <div class="row">
+            <!-- LEFT -->
+            <div class="col-md-6">
+              <div class="form-card">
+                <h6 class="section-title" style="color: #28a745;">
+    <i class="fas fa-user-circle mr-2" style="color: #28a745;"></i>Basic Details
+</h6>
+
+                <div class="input-group mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text"
+                      ><i class="fas fa-user" style="color: #28a745;"></i
+                    ></span>
+                  </div>
+                  <input
+                    type="text"
+                    id="name"
+                    class="form-control"
+                    placeholder="Full Name"
+                    style="border-color: #75eb90;"
+                    
+                  />
+                </div>
+
+                <div class="input-group mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text"
+                      ><i class="fas fa-phone" style="color: #28a745;"></i
+                    ></span>
+                  </div>
+                  <input
+                    type="text"
+                    id="phone"
+                    class="form-control"
+                    placeholder="Phone Number"
+                    style="border-color: #75eb90;"
+                  />
+                </div>
+
+                <div class="input-group mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text"
+                      ><i class="fas fa-lock" style="color: #28a745;"></i
+                    ></span>
+                  </div>
+                  <input
+                    type="password"
+                    id="password"
+                    class="form-control"
+                    placeholder="6-digit Password"
+                    style="border-color: #75eb90;"
+                  />
+                </div>
+
+                
+                <!-- 🔥 REPLACE ONLY THIS PART IN YOUR FILE -->
+
+<label style="color: #28a745;">
+  <i class="fas fa-users mr-1"></i> Sponsor
+</label>
+
+<input 
+  type="text"
+  id="sponsorSearch"
+  class="form-control mb-2"
+  placeholder="Search sponsor (name or ID)"
+  style="border-color: #75eb90;"
+>
+
+<div id="sponsorResults" class="list-group mb-2"></div>
+
+<input type="hidden" id="sponsor">
+
+                <label style=" color: #28a745;"><i class="fas fa-ticket-alt mr-1"></i> Voucher</label>
+                <select id="voucher" class="form-control mb-3" style="border-color: #75eb90;"></select>
+              </div>
+
+              <!-- PLAN -->
+              <div id="planPreview" class="d-none">
+                <div class="plan-card shadow">
+                  <h6>
+                    <i class="fas fa-gift mr-1"></i> <span id="planName"></span>
+                  </h6>
+                  <p>
+                    <i class="fas fa-rupee-sign"></i> ₹<span
+                      id="planAmount"
+                    ></span>
+                  </p>
+                  <p id="planPassive"></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- RIGHT -->
+            <div class="col-md-6">
+              <div class="form-card">
+                <h6 class="section-title text-success">
+                  <i class="fas fa-id-card mr-2"></i>KYC & Bank
+                </h6>
+
+                <textarea
+                  id="address"
+                  class="form-control mb-3"
+                  placeholder="Address"
+                  style="border-color: #75eb90;"
+                ></textarea>
+
+                <input
+                  type="text"
+                  id="account"
+                  class="form-control mb-3"
+                  placeholder="Bank Account Number"
+                  style="border-color: #75eb90;"
+                />
+
+                <input
+                  type="text"
+                  id="ifsc"
+                  class="form-control mb-3"
+                  placeholder="IFSC Code"
+                  style="border-color: #75eb90;"
+                />
+
+                <!-- FILE UPLOAD -->
+                <div class="adhar">
+                  <div class="adhaar-1">
+                    <label style=" color: #28a745;"
+                      ><i class="fas fa-image mr-1"></i>Aadhaar Front</label
+                    >
+                    <div
+                      class="file-upload"
+                      onclick="triggerFile('aadhaar_front')"
+                      style="border-color: #75eb90;"
+                    >
+                      <i class="fas fa-cloud-upload-alt" ></i>
+                      <span id="frontText">Upload Aadhaar Front</span>
+                      <input type="file" id="aadhaar_front" hidden />
+                    </div>
+                  </div>
+                  <div class="adhaar-1">
+                    <label style="color: #28a745;"><i class="fas fa-image mr-1"></i>Aadhaar Back</label>
+                    <div
+                      class="file-upload"
+                      onclick="triggerFile('aadhaar_back')"
+                      style="border-color: #75eb90;"
+                    >
+                      <i class="fas fa-cloud-upload-alt"></i>
+                      <span id="backText">Upload Aadhaar Back</span>
+                      <input type="file" id="aadhaar_back" hidden />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ACTION -->
+          <div class="text-center mt-4">
+            <button id="submitBtn" class="btn btn-gradient px-5 py-2" >
+              <i class="fas fa-check-circle mr-1"></i>
+              Create User
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* REMOVE GAP */
+  .content-wrapper .content {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .content-wrapper .container-fluid {
+    margin: 0 !important;
+  }
+
+  /* MAIN CARD */
+  .main-card {
+    border-radius: 14px;
+  }
+
+  /* FORM CARD */
+  .form-card {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #eef1f5;
+    margin-bottom: 15px;
+    transition: 0.2s;
+  }
+
+  .form-card:hover {
+    transform: translateY(-2px);
+  }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-weight: 600;
+    margin-bottom: 15px;
+  }
+
+  /* PLAN CARD */
+  .plan-card {
+    border-radius: 12px;
+    background: linear-gradient(135deg, #007bff, #00c6ff);
+    color: #fff;
+    padding: 15px;
+  }
+
+  /* INPUT */
+  .form-control {
+    border-radius: 8px;
+  }
+
+  /* INPUT GROUP ICON */
+  .input-group-text {
+    background: #f1f3f6;
+  }
+
+  /* BUTTON */
+  .btn-gradient {
+   background: linear-gradient(135deg, #28a745, #1e7e34);
+    color: #fff;
+    border-radius: 30px;
+    font-weight: 600;
+    transition: 0.3s;
+  }
+
+  .btn-gradient:hover {
+    background: linear-gradient(135deg, #218838, #135f23);
+    color: #fff;
+    transform: translateY(-2px); /* Slight lift effect */
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+  /* FILE UPLOAD */
+  .file-upload {
+    border: 2px dashed #d0d7de;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    background: #f8f9fb;
+    transition: 0.2s;
+  }
+
+  .file-upload i {
+    font-size: 24px;
+    color: #007bff;
+  }
+  .adhar{
+    display: flex;
+    justify-content: space-around;
+    height: 147px;
+    gap: 10px;
+  }
+
+  .adhaar-1{
+    flex: 1;
+
+  }
+
+  .file-upload span {
+    display: block;
+    margin-top: 6px;
+    font-size: 13px;
+  }
+
+  .file-upload:hover {
+    border-color: #007bff;
+    background: #eef5ff;
+  }
+
+  /* TOAST */
+  .toast-box {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 18px;
+    border-radius: 8px;
+    color: white;
+    z-index: 9999;
+  }
+
+  .toast-success {
+    background: #28a745;
+  }
+  .toast-danger {
+    background: #dc3545;
+  }
+</style>
+
+<script>
+
+const token = localStorage.getItem("access");
+if (!token) window.location.href = "/api/accounts/admin/login/";
+
+// ================= TOAST =================
+function showToast(msg, type = "success") {
+  const el = document.createElement("div");
+  el.className = `toast-box toast-${type}`;
+  el.innerText = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ================= INPUT REFERENCES (🔥 CRITICAL FIX) =================
+const nameInput = document.getElementById("name");
+const phoneInput = document.getElementById("phone");
+const passwordInput = document.getElementById("password");
+const addressInput = document.getElementById("address");
+const accountInput = document.getElementById("account");
+const ifscInput = document.getElementById("ifsc");
+
+// ================= SPONSOR =================
+const sponsorInput = document.getElementById("sponsorSearch");
+const sponsorHidden = document.getElementById("sponsor");
+const sponsorResults = document.getElementById("sponsorResults");
+
+let isRootUser = false;
+
+// 🔥 ROOT CHECK
+fetch("/api/accounts/admin/mlm-root-check/", {
+    headers: { Authorization: "Bearer " + token }
+})
+.then(res => res.json())
+.then(data => {
+    if (!data.has_root) {
+        isRootUser = true;
+        sponsorInput.placeholder = "Root user (no sponsor required)";
+        sponsorInput.disabled = true;
+    }
+});
+
+// ================= SPONSOR SEARCH =================
+let selectedSponsor = null;
+let debounceTimer = null;
+
+sponsorInput.addEventListener("input", function () {
+
+    if (isRootUser) return;
+
+    const query = this.value.trim();
+
+    selectedSponsor = null;
+    sponsorHidden.value = "";
+
+    clearTimeout(debounceTimer);
+
+    if (query.length < 2) {
+        sponsorResults.innerHTML = "";
+        return;
+    }
+
+    debounceTimer = setTimeout(() => {
+
+        fetch(`/api/accounts/admin/users/?search=${query}`, {
+            headers: { Authorization: "Bearer " + token }
+        })
+        .then(res => res.json())
+        .then(data => {
+
+            const users = data.results || [];
+
+            let html = "";
+
+            users.forEach(u => {
+                if (!u.is_mlm_active || !u.is_wallet_active || u.is_root) return;
+
+                html += `
+                    <div class="list-group-item list-group-item-action"
+                        onclick="selectSponsor(${u.id}, '${u.name || "No Name"}', '${u.user_id}')">
+                        ${u.name || "No Name"} (${u.user_id})
+                    </div>
+                `;
+            });
+
+            sponsorResults.innerHTML = html || "<div class='p-2 text-muted'>No results</div>";
+
+        });
+
+    }, 300);
+});
+
+// 🔥 SELECT SPONSOR
+function selectSponsor(id, name, user_id) {
+    selectedSponsor = id;
+    sponsorHidden.value = id;
+    sponsorInput.value = `${name} (${user_id})`;
+    sponsorResults.innerHTML = "";
+}
+
+// ================= VOUCHERS =================
+let voucherData = [];
+const voucher = document.getElementById("voucher");
+
+fetch("/api/accounts/admin/vouchers/", {
+    headers: { Authorization: "Bearer " + token },
+})
+.then(res => res.json())
+.then(data => {
+    voucherData = data.results || data;
+
+    let html = '<option value="">Select Voucher</option>';
+
+    voucherData.forEach(v => {
+        if (!v.is_used) {
+            html += `<option value="${v.id}">
+                ${v.code} (${v.plan_name})
+            </option>`;
+        }
+    });
+
+    voucher.innerHTML = html;
+});
+
+// ================= FILE INPUT =================
+function triggerFile(id) {
+    document.getElementById(id).click();
+}
+
+aadhaar_front.addEventListener("change", function () {
+    frontText.innerText = this.files[0]?.name || "Upload Aadhaar Front";
+});
+
+aadhaar_back.addEventListener("change", function () {
+    backText.innerText = this.files[0]?.name || "Upload Aadhaar Back";
+});
+
+// ================= PLAN PREVIEW =================
+voucher.addEventListener("change", function () {
+
+    const selected = voucherData.find(v => v.id == this.value);
+
+    if (!selected) {
+        planPreview.classList.add("d-none");
+        return;
+    }
+
+    planPreview.classList.remove("d-none");
+
+    planName.innerText = selected.plan_name;
+    planAmount.innerText = selected.plan_amount;
+
+    planPassive.innerText = selected.has_passive_income
+        ? `Passive ₹${selected.passive_income_amount}/month`
+        : "No passive income";
+});
+
+// ================= CREATE USER =================
+createUserForm.addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const btn = submitBtn;
+
+    // 🔥 NAME VALIDATION (CRITICAL FIX)
+    if (!nameInput.value || nameInput.value.trim() === "") {
+        showToast("Name is required", "danger");
+        return;
+    }
+
+    if (!phoneInput.value || phoneInput.value.trim() === "") {
+        showToast("Phone is required", "danger");
+        return;
+    }
+
+    if (!passwordInput.value || passwordInput.value.length !== 6) {
+        showToast("Password must be 6 characters", "danger");
+        return;
+    }
+
+    if (!isRootUser && !selectedSponsor) {
+        showToast("Please select sponsor from list", "danger");
+        return;
+    }
+
+    if (!voucher.value) {
+        showToast("Please select a valid voucher", "danger");
+        return;
+    }
+
+    btn.innerText = "Creating...";
+    btn.disabled = true;
+
+    const formData = new FormData();
+
+    formData.append("name", nameInput.value.trim());
+    formData.append("phone", phoneInput.value.trim());
+    formData.append("password", passwordInput.value.trim());
+
+    if (!isRootUser && selectedSponsor) {
+        formData.append("sponsor_id", selectedSponsor);
+    }
+
+    formData.append("voucher_id", voucher.value);
+    formData.append("address", addressInput.value.trim());
+    formData.append("bank_account_number", accountInput.value.trim());
+    formData.append("ifsc_code", ifscInput.value.trim());
+
+    if (aadhaar_front.files[0]) {
+        formData.append("aadhaar_front", aadhaar_front.files[0]);
+    }
+
+    if (aadhaar_back.files[0]) {
+        formData.append("aadhaar_back", aadhaar_back.files[0]);
+    }
+
+    fetch("/api/accounts/admin/create-user/", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token },
+        body: formData,
+    })
+    .then(async res => {
+        const data = await res.json();
+
+        if (!res.ok) {
+            showToast(data.error || "Error creating user", "danger");
+        } else {
+            showToast("User created successfully");
+
+            createUserForm.reset();
+            planPreview.classList.add("d-none");
+
+            selectedSponsor = null;
+            sponsorInput.value = "";
+            sponsorHidden.value = "";
+        }
+
+        btn.innerText = "Create User";
+        btn.disabled = false;
+    })
+    .catch(() => {
+        showToast("Network error", "danger");
+        btn.innerText = "Create User";
+        btn.disabled = false;
+    });
+
+});
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #ffffff;
+            --text: #0f172a;
+            --muted: #64748b;
+            --border: #a2c1eb;
+            --primary: #2563eb;
+        }
+
+        body.dark {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+            --border: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: "Inter", sans-serif;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            transition: 0.3s;
+        }
+
+        .wrapper {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 420px;
+            background: var(--card);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            transition: 0.3s;
+        }
+
+        h2 {
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 20px;
+        }
+
+        .referral {
+            background: rgba(59,130,246,0.1);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text);
+        }
+
+        input:focus, textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        .upload-box {
+            border: 1px dashed var(--border);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .preview {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .toggle {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            cursor: pointer;
+            font-size: 12px;
+            color: white;
+        }
+
+        .success {
+            display: none;
+            text-align: center;
+            color: #22c55e;
+            font-weight: bold;
+        }
+
+        .loader {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #b91c1c;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="toggle" onclick="toggleTheme()">Toggle Theme</div>
+
+<div class="wrapper">
+
+<div class="card">
+
+<h2>Create account</h2>
+<div class="subtitle">Secure onboarding</div>
+
+<div class="referral">
+Referral Code: <b>{{ referral_code }}</b>
+</div>
+
+<form method="POST" enctype="multipart/form-data" id="form">
+{% csrf_token %}
+
+<input name="name" placeholder="Full Name" required>
+<input type="password" name="password" placeholder="Password (6 chars)" required>
+<input name="phone" placeholder="Phone" required>
+
+<textarea name="address" placeholder="Address"></textarea>
+
+<input name="bank_account_number" placeholder="Bank Account">
+<input name="ifsc_code" placeholder="IFSC">
+
+<div class="upload-box" onclick="front.click()">
+Aadhaar Front
+<input type="file" id="front" name="aadhaar_front" hidden required>
+<img id="frontPreview" class="preview">
+</div>
+
+<div class="upload-box" onclick="back.click()">
+Aadhaar Back
+<input type="file" id="back" name="aadhaar_back" hidden required>
+<img id="backPreview" class="preview">
+</div>
+
+<input type="hidden" name="referral_code" value="{{ referral_code }}">
+
+<button id="submitBtn">Create Account</button>
+
+</form>
+
+<div class="success" id="successMsg">
+✅ Registration submitted successfully
+</div>
+
+{% if errors %}
+<div class="error">
+<ul>
+{% for field, error_list in errors.items %}
+{% for error in error_list %}
+<li>{{ field }}: {{ error }}</li>
+{% endfor %}
+{% endfor %}
+</ul>
+</div>
+{% endif %}
+
+</div>
+
+</div>
+
+<div class="loader" id="loader">Processing...</div>
+
+<script>
+// IMAGE PREVIEW
+function preview(input, img) {
+    input.addEventListener("change", () => {
+        const file = input.files[0];
+        if (file) {
+            img.src = URL.createObjectURL(file);
+            img.style.display = "block";
+        }
+    });
+}
+
+preview(front, frontPreview);
+preview(back, backPreview);
+
+// THEME
+function toggleTheme() {
+    document.body.classList.toggle("dark");
+    localStorage.setItem("theme", document.body.classList.contains("dark"));
+}
+
+if (localStorage.getItem("theme") === "true") {
+    document.body.classList.add("dark");
+}
+
+// LOADING + SUCCESS
+const form = document.getElementById("form");
+const loader = document.getElementById("loader");
+const btn = document.getElementById("submitBtn");
+
+form.addEventListener("submit", () => {
+    btn.classList.add("loading");
+    loader.style.display = "flex";
+});
+</script>
+
+</body>
+</html>

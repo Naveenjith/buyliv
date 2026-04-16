@@ -1,0 +1,402 @@
+{% extends "admin/base.html" %}
+{% block content %}
+
+<div class="container-fluid px-2 py-2">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="mb-0 font-weight-bold">
+                <i class="fas fa-user-clock" style="color: #28a745;"></i>
+                Pending Requests
+            </h4>
+            <small class="text-muted">Approve or reject new user registrations</small>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="searchInput"
+                   class="form-control form-control-sm"
+                   placeholder="🔍 Search name / phone...">
+        </div>
+    </div>
+
+    <!-- CARD -->
+    <div class="card border-0 shadow-sm main-card">
+
+        <div class="card-body p-0 table-responsive">
+
+            <table class="table table-hover align-middle mb-0 request-table">
+
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>User</th>
+                        <th>Phone</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody id="request-table"></tbody>
+
+            </table>
+
+        </div>
+
+        <!-- PAGINATION -->
+        <div class="pagination-box">
+            <button class="btn btn-sm btn-outline-secondary" onclick="prevPage()">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+
+            <span id="page-info"></span>
+
+            <button class="btn btn-sm btn-outline-secondary" onclick="nextPage()">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+
+/* REMOVE LEFT GAP */
+.content.px-3 {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* HEADER SEARCH */
+.search-box {
+    width: 260px;
+}
+
+/* CARD */
+.main-card {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* TABLE HEADER */
+.request-table thead {
+    background: linear-gradient(90deg, #e7e8e9, #eef3ff);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ROW HOVER */
+.request-table tbody tr:hover {
+    background: #f4f8ff;
+}
+
+/* USER BLOCK */
+.user-block {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* STATUS */
+.badge-status {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #fff3cd;
+    color: #f15608;
+}
+
+/* ACTION BOX */
+.action-box {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.action-box select {
+    height: 32px;
+    border-radius: 6px;
+    width: 200px;
+}
+
+/* BUTTON STYLE */
+.btn-success {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+    border: none;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #dc3545, #b21f2d);
+    border: none;
+}
+
+/* PAGINATION */
+.pagination-box {
+    padding: 10px 15px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    border-top: 1px solid #eee;
+    background: #fafafa;
+}
+
+/* TOAST */
+.toast-msg {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 16px;
+    color: #fff;
+    border-radius: 8px;
+    z-index: 9999;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+</style>
+
+<script>
+const token = localStorage.getItem("access");
+if (!token) window.location.href = "/api/accounts/admin/login/";
+
+let allData = [];
+let filteredData = [];
+let currentPage = 1;
+const pageSize = 5;
+
+let voucherOptions = "";
+
+// TOAST
+function showToast(msg, type="success") {
+    const colors = {
+        success: "#28a745",
+        danger: "#dc3545",
+        warning: "#ffc107"
+    };
+
+    const div = document.createElement("div");
+    div.className = "toast-msg";
+    div.style.background = colors[type] || "#333";
+    div.innerText = msg;
+
+    document.body.appendChild(div);
+    setTimeout(() => div.remove(), 3000);
+}
+
+// FETCH
+function fetchWithAuth(url, options={}) {
+    options.headers = {
+        ...(options.headers || {}),
+        "Authorization": "Bearer " + token
+    };
+
+    return fetch(url, options).then(res => {
+        if (res.status === 401) {
+            localStorage.clear();
+            window.location.href = "/api/accounts/admin/login/";
+        }
+        return res.json();
+    });
+}
+
+// LOAD VOUCHERS
+function loadVouchers() {
+    return fetchWithAuth("/api/accounts/admin/vouchers/")
+    .then(data => {
+        let html = "<option value=''>Select Voucher</option>";
+
+        data.forEach(v => {
+            if (!v.is_used) {
+                html += `<option value="${v.id}">
+                    ${v.code} (${v.plan_name})
+                </option>`;
+            }
+        });
+
+        voucherOptions = html;
+    });
+}
+
+// LOAD REQUESTS
+function loadRequests() {
+    fetchWithAuth("/api/accounts/admin/pending-requests/")
+    .then(data => {
+        allData = data;
+        filteredData = data;
+        renderTable();
+    });
+}
+
+// TABLE
+function renderTable() {
+    const table = document.getElementById("request-table");
+
+    if (!filteredData.length) {
+        table.innerHTML = `<tr><td colspan="6" class="text-center p-4 text-muted">No data</td></tr>`;
+        return;
+    }
+
+    const start = (currentPage - 1) * pageSize;
+    const pageData = filteredData.slice(start, start + pageSize);
+
+    let html = "";
+
+    pageData.forEach((item, index) => {
+        html += `
+        <tr>
+            <td>${start + index + 1}</td>
+
+            <td>
+                <div class="user-block">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                        <strong>${item.name}</strong><br>
+                        <small class="text-muted">${item.address || ""}</small>
+                    </div>
+                </div>
+            </td>
+
+            <td>${item.phone}</td>
+
+            <td>
+                <i class="far fa-clock text-muted mr-1"></i>
+                ${formatDate(item.created_at)}
+            </td>
+
+            <td>
+                <span class="badge-status">
+                    <i class="fas fa-hourglass-half mr-1"></i> Pending
+                </span>
+            </td>
+
+            <td>
+                <div class="action-box">
+
+                    <select id="voucher-${item.id}">
+                        ${voucherOptions}
+                    </select>
+
+                    <button class="btn btn-success btn-sm"
+                        onclick="approve(${item.id})">
+                        <i class="fas fa-check"></i>
+                    </button>
+
+                    <button class="btn btn-danger btn-sm"
+                        onclick="reject(${item.id})">
+                        <i class="fas fa-times"></i>
+                    </button>
+
+                    <button class="btn btn-outline-primary btn-sm"
+                        onclick="viewRequest(${item.id})">
+                        <i class="fas fa-eye"></i>
+                    </button>
+
+                </div>
+            </td>
+        </tr>`;
+    });
+
+    table.innerHTML = html;
+
+    document.getElementById("page-info").innerText =
+        `Page ${currentPage} / ${Math.ceil(filteredData.length / pageSize)}`;
+}
+
+// APPROVE
+function approve(id) {
+    const voucher = document.getElementById(`voucher-${id}`).value;
+
+    if (!voucher) {
+        showToast("Select voucher", "danger");
+        return;
+    }
+
+    fetchWithAuth(`/api/accounts/admin/request/${id}/approve/`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ voucher_id: voucher })
+    })
+    .then(res => {
+        if (res.error) showToast(res.error, "danger");
+        else {
+            showToast("Approved", "success");
+            removeRow(id);
+        }
+    });
+}
+
+// REJECT
+function reject(id) {
+    fetchWithAuth(`/api/accounts/admin/request/${id}/reject/`, {
+        method: "POST"
+    })
+    .then(() => {
+        showToast("Rejected", "warning");
+        removeRow(id);
+    });
+}
+
+// REMOVE
+function removeRow(id) {
+    allData = allData.filter(x => x.id !== id);
+    filteredData = filteredData.filter(x => x.id !== id);
+    renderTable();
+}
+
+// SEARCH
+document.getElementById("searchInput").addEventListener("input", function () {
+    const val = this.value.toLowerCase();
+
+    filteredData = allData.filter(x =>
+        (x.name || "").toLowerCase().includes(val) ||
+        (x.phone || "").includes(val)
+    );
+
+    currentPage = 1;
+    renderTable();
+});
+
+// NAV
+function viewRequest(id) {
+    window.location.href = `/api/accounts/panel/request/${id}/`;
+}
+
+// DATE
+function formatDate(d) {
+    const date = new Date(d);
+    return date.toLocaleDateString() + " " + date.toLocaleTimeString();
+}
+
+// PAGINATION
+function nextPage() {
+    currentPage++;
+    renderTable();
+}
+
+function prevPage() {
+    if (currentPage > 1) currentPage--;
+    renderTable();
+}
+
+// INIT
+loadVouchers().then(loadRequests);
+</script>
+
+{% endblock %}

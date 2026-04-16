@@ -1,0 +1,221 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+<!-- 🔥 HERO SECTION (removes emptiness) -->
+<div class="card shadow-sm mb-4 border-0">
+    <div class="card-body">
+
+        <div class="d-flex align-items-center">
+
+            <!-- LEFT CONTENT -->
+            <div class="flex-grow-1">
+                <h4 class="mb-1 font-weight-bold">Welcome, Admin 👋</h4>
+                <p class="text-muted mb-0">
+                    Manage users, payouts, and system operations efficiently.
+                </p>
+            </div>
+
+            <!-- RIGHT IMAGE -->
+            <div class="ml-3">
+                <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+                     class="hero-img">
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+
+<!-- 🔥 KPI CARDS -->
+<div class="row">
+
+    <!-- USERS -->
+    <div class="col-lg-3 col-6">
+        <div class="small-box bg-info dashboard-card"
+             onclick="go('/api/accounts/panel/users/')">
+            <div class="inner">
+                <h4 id="total-users">--</h4>
+                <p>Total Users</p>
+            </div>
+            <div class="icon">
+                <i class="fas fa-users"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- PENDING -->
+    <div class="col-lg-3 col-6">
+        <div class="small-box bg-warning dashboard-card"
+             onclick="go('/api/accounts/panel/pending/')">
+            <div class="inner">
+                <h4 id="pending-requests">--</h4>
+                <p>Pending Requests</p>
+            </div>
+            <div class="icon">
+                <i class="fas fa-user-clock"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAYOUT REQUESTS -->
+    <div class="col-lg-3 col-6">
+        <div class="small-box bg-success dashboard-card"
+             onclick="go('/api/accounts/admin/payouts/')">
+            <div class="inner">
+                <h4 id="payout-count">--</h4>
+                <p>Payout Requests</p>
+            </div>
+            <div class="icon">
+                <i class="fas fa-money-check-alt"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- EARNINGS -->
+    <div class="col-lg-3 col-6">
+        <div class="small-box bg-danger dashboard-card"
+             onclick="go('/api/wallet/payout/earnings/')">
+            <div class="inner">
+                <h4 id="total-earnings">--</h4>
+                <p>Total Earnings</p>
+            </div>
+            <div class="icon">
+                <i class="fas fa-wallet"></i>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+
+
+<style>
+.dashboard-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.dashboard-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.hero-img {
+    height: 80px;
+    opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+    .hero-img {
+        height: 50px;
+    }
+}
+.card-body {
+    background: linear-gradient(135deg, #f8f9fa, #eef2f7);
+    border-radius: 10px;
+}
+</style>
+
+
+<script>
+const token = localStorage.getItem("access");
+
+// 🔴 AUTH CHECK
+if (!token) {
+    window.location.href = "/api/accounts/admin/login/";
+}
+
+// 🔥 NAVIGATION
+function go(url) {
+    window.location.href = url;
+}
+
+// 🔥 FETCH HELPER
+function fetchWithAuth(url) {
+    return fetch(url, {
+        headers: {
+            "Authorization": "Bearer " + token
+        }
+    }).then(res => {
+        if (res.status === 401) {
+            localStorage.clear();
+            window.location.href = "/api/accounts/admin/login/";
+            throw new Error("Unauthorized");
+        }
+        return res.json();
+    });
+}
+
+
+// ✅ USERS COUNT
+fetchWithAuth("/api/accounts/admin/users/")
+.then(data => {
+    const count = data.count !== undefined
+        ? data.count
+        : (Array.isArray(data) ? data.length : 0);
+
+    document.getElementById("total-users").innerText = count;
+})
+.catch(() => document.getElementById("total-users").innerText = "ERR");
+
+
+// ✅ PENDING COUNT
+fetchWithAuth("/api/accounts/admin/pending-requests/")
+.then(data => {
+    document.getElementById("pending-requests").innerText = data.length;
+})
+.catch(() => document.getElementById("pending-requests").innerText = "ERR");
+
+
+// ✅ PAYOUT COUNT
+fetchWithAuth("/api/wallet/payout/list/")
+.then(data => {
+    const count = data.count !== undefined
+        ? data.count
+        : (Array.isArray(data) ? data.length : 0);
+
+    document.getElementById("payout-count").innerText = count;
+})
+.catch(() => document.getElementById("payout-count").innerText = "ERR");
+
+
+fetchWithAuth("/api/wallet/payout/payout-earnings/")
+.then(data => {
+    console.log("Earnings API:", data);
+
+    let total = 0;
+
+    try {
+        // ✅ safest access
+        total = data?.results?.total_earnings ?? 0;
+
+        // fallback (just in case backend changes)
+        if (!total && data?.total_earnings !== undefined) {
+            total = data.total_earnings;
+        }
+
+    } catch (e) {
+        console.error("Parsing error:", e);
+        total = 0;
+    }
+
+    // 💰 format clean
+    const formatted = Number(total).toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+
+    document.getElementById("total-earnings").innerText = "₹ " + formatted;
+})
+.catch((err) => {
+    console.error("Earnings API failed:", err);
+    document.getElementById("total-earnings").innerText = "₹ 0.00";
+});
+
+</script>
+
+{% endblock %}

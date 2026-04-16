@@ -1,0 +1,617 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+<!-- TOAST CONTAINER -->
+<div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Confirm Action</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <p id="confirmMessage">Are you sure?</p>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button type="button" id="confirmBtn" class="btn btn-primary">Yes</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        
+        <button id="mlmToggleBtn"
+        class="btn btn-sm mr-2"
+        onclick="toggleMLM()">
+        Loading...
+    </button>
+
+        <div>
+            <h3 class="fw-bold mb-1">User Details</h3>
+            <small class="text-muted">Complete profile, KYC & financial info</small>
+        </div>
+
+        <a href="/api/accounts/panel/users/" class="btn btn-outline-dark btn-sm">
+            ← Back
+        </a>
+
+        
+
+    </div>
+
+    <div class="row g-4">
+
+        <!-- LEFT PANEL -->
+        <div class="col-lg-4">
+
+            <div class="card shadow-sm border-0 profile-card">
+
+                <div class="card-body text-center">
+
+                    <div class="avatar mb-3">
+                        <i class="fas fa-user"></i>
+                    </div>
+
+                    <h5 id="display-name">--</h5>
+                    <small class="text-muted" id="display-id">--</small>
+
+                    <div id="status-badge" class="mt-2 mb-3"></div>
+                    <div id="mlm-status" class="mt-2"></div>
+
+                    <div class="info-block text-start">
+
+                        <div><span>📞</span> <span id="display-phone">-</span></div>
+                        <div><span>👤</span> <span id="display-sponsor">-</span></div>
+                        <div><span>🎟</span> <span id="display-voucher">-</span></div>
+                        <div><span>📅</span> <span id="display-activation">-</span></div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="col-lg-8">
+
+            <!-- BASIC -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body">
+
+                    <h6 class="section-title">Basic Information</h6>
+
+                    <form id="userForm">
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+                                <label>User ID</label>
+                                <input id="user_id" class="form-control" readonly>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label>Name</label>
+                                <input id="name" class="form-control">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label>Phone</label>
+                                <input id="phone" class="form-control" >
+                            </div>
+
+                            <div class="col-md-6">
+                                <label>Sponsor</label>
+                                <input id="sponsor" class="form-control" readonly>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label>Wallet</label>
+                                <select id="wallet" class="form-control">
+                                    <option value="true">Active</option>
+                                    <option value="false">Inactive</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label>Status</label>
+                                <select id="approved" class="form-control">
+                                    <option value="true">Approved</option>
+                                    <option value="false">Pending</option>
+                                </select>
+                            </div>
+
+                        </div>
+
+                        <button class="btn btn-primary mt-3 px-4">
+                            Update User
+                        </button>
+
+                        
+
+                    </form>
+                    
+
+                </div>
+            </div>
+
+            <!-- KYC -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+
+        <h6 class="section-title">KYC Information</h6>
+
+        <div class="row g-3">
+
+            <div class="col-md-6">
+                <label>Aadhaar Front</label>
+                <input type="file" id="aadhaar_front_input" class="form-control mb-2">
+                <div class="kyc-card">
+                    <img id="aadhaar_front_img">
+                    <span id="no_front">No Image</span>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <label>Aadhaar Back</label>
+                <input type="file" id="aadhaar_back_input" class="form-control mb-2">
+                <div class="kyc-card">
+                    <img id="aadhaar_back_img">
+                    <span id="no_back">No Image</span>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="mt-3">
+            <label>Address</label>
+            <textarea id="address_input" class="form-control"></textarea>
+        </div>
+
+    </div>
+</div>
+
+            <!-- BANK -->
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+
+                    <h6 class="section-title">Bank Details</h6>
+
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+                            <label>Account Number</label>
+                            <input id="bank_account" class="form-control" readonly>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label>IFSC Code</label>
+                            <input id="ifsc" class="form-control" readonly>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- PASSWORD RESET -->
+<div class="card shadow-sm border-0 mt-4">
+    <div class="card-body">
+
+        <h6 class="section-title text-danger">
+            🔐 Reset User Password
+        </h6>
+        
+
+        <form id="passwordForm">
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+                    <label>New Password</label>
+                    <input type="password" id="new_password" class="form-control" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label>Confirm Password</label>
+                    <input type="password" id="confirm_password" class="form-control" required>
+                </div>
+
+            </div>
+
+            <button class="btn btn-danger mt-3 px-4">
+                Reset Password
+            </button>
+
+        </form>
+
+    </div>
+</div>
+
+        </div>
+
+    </div>
+
+    
+
+</div>
+
+<style>
+.profile-card {
+    border-radius: 18px;
+}
+
+.avatar {
+    width: 90px;
+    height: 90px;
+    background: linear-gradient(135deg,#4e73df,#1c3faa);
+    border-radius: 50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-size:28px;
+    margin:auto;
+}
+
+.section-title {
+    font-weight:600;
+    margin-bottom:15px;
+}
+
+.info-block div {
+    padding:6px 0;
+    font-size:14px;
+}
+
+.kyc-card {
+    border:1px dashed #ddd;
+    border-radius:10px;
+    padding:10px;
+    text-align:center;
+    background:#fafafa;
+}
+
+.kyc-card img {
+    max-height:150px;
+    display:none;
+    margin:auto;
+}
+
+.address-box {
+    background:#f8f9fa;
+    padding:10px;
+    border-radius:8px;
+}
+
+.status-pill {
+    padding:6px 12px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:600;
+}
+
+.status-approved {
+    background:#e6f4ea;
+    color:#28a745;
+}
+
+.status-pending {
+    background:#fff3cd;
+    color:#856404;
+}
+</style>
+
+<script>
+
+// 🔥 STATE
+let currentMLM = true;
+
+// 🔥 FIXED TOGGLE (DETAIL PAGE CORRECT)
+function toggleMLM() {
+
+    showConfirm(
+        currentMLM
+            ? "Deactivate this user? They will STOP earning income."
+            : "Activate this user?",
+        () => {
+
+            fetch(`/api/accounts/admin/users/${id}/toggle-mlm/`, {
+                method: "POST",
+                headers: {
+                    "Authorization": "Bearer " + token
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                showToast(data.message || "Updated");
+                loadUser(); // 🔥 refresh THIS user (not list)
+            })
+            .catch(() => showToast("Error updating user", "error"));
+        }
+    );
+}
+
+
+// 🔥 TOAST FUNCTION (UNCHANGED)
+function showToast(message, type="success") {
+    const colors = {
+        success: "#28a745",
+        error: "#dc3545",
+        warning: "#ffc107"
+    };
+
+    const toast = document.createElement("div");
+
+    toast.style.minWidth = "250px";
+    toast.style.marginBottom = "10px";
+    toast.style.padding = "12px 16px";
+    toast.style.color = "#fff";
+    toast.style.borderRadius = "8px";
+    toast.style.fontSize = "14px";
+    toast.style.boxShadow = "0 4px 10px rgba(0,0,0,0.2)";
+    toast.style.background = colors[type] || "#333";
+    toast.style.opacity = "0";
+    toast.style.transition = "all 0.3s ease";
+
+    toast.innerText = message;
+
+    document.getElementById("toast-container").appendChild(toast);
+
+    setTimeout(() => toast.style.opacity = "1", 100);
+
+    setTimeout(() => {
+        toast.style.opacity = "0";
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+
+// 🔥 CONFIRM MODAL (UNCHANGED)
+let confirmModalInstance = null;
+let confirmCallback = null;
+
+function showConfirm(message, callback) {
+    document.getElementById("confirmMessage").innerText = message;
+    confirmCallback = callback;
+
+    const modalEl = document.getElementById('confirmModal');
+    confirmModalInstance = new bootstrap.Modal(modalEl);
+    confirmModalInstance.show();
+}
+
+document.getElementById("confirmBtn").onclick = function () {
+    if (confirmModalInstance) {
+        confirmModalInstance.hide();
+    }
+    if (confirmCallback) confirmCallback();
+};
+
+
+// 🔐 AUTH (UNCHANGED)
+const token = localStorage.getItem("access");
+const id = "{{ user_id }}";
+
+if (!token) {
+    window.location.href = "/api/accounts/admin/login/";
+}
+
+
+// 🔹 Helper fetch (UNCHANGED)
+function fetchWithAuth(url) {
+    return fetch(url, {
+        headers: { "Authorization": "Bearer " + token }
+    }).then(res => res.json());
+}
+
+
+// 🔹 LOAD USER (🔥 UPDATED WITH MLM UI)
+function loadUser() {
+    fetchWithAuth(`/api/accounts/admin/users/${id}/`)
+    .then(data => {
+
+        const set = (id, val) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (el.tagName === "INPUT") el.value = val || "";
+            else el.innerText = val || "-";
+        };
+
+        set("user_id", data.user_id);
+        set("name", data.name);
+        set("phone", data.phone);
+        set("sponsor", data.sponsor_name);
+
+        document.getElementById("wallet").value = data.is_wallet_active;
+        document.getElementById("approved").value = data.is_approved;
+        document.getElementById("address_input").value = data.address || "";
+
+        set("display-name", data.name);
+        set("display-id", data.user_id);
+        set("display-phone", data.phone);
+        set("display-sponsor", data.sponsor_name);
+        set("display-voucher", data.voucher_code);
+        set("display-activation", formatDate(data.activation_date));
+
+        set("bank_account", data.bank_account_number || data.kyc?.bank_account_number);
+        set("ifsc", data.ifsc_code || data.kyc?.ifsc_code);
+
+        document.getElementById("status-badge").innerHTML =
+            data.is_approved
+            ? `<span class="status-pill status-approved">Approved</span>`
+            : `<span class="status-pill status-pending">Pending</span>`;
+
+
+        // 🔥 MLM LOGIC (THIS WAS MISSING)
+        currentMLM = data.is_mlm_active;
+
+        const btn = document.getElementById("mlmToggleBtn");
+        const statusEl = document.getElementById("mlm-status");
+
+        if (btn) {
+            if (data.is_mlm_active) {
+                btn.innerText = "Deactivate User";
+                btn.className = "btn btn-danger btn-sm mr-2";
+            } else {
+                btn.innerText = "Activate User";
+                btn.className = "btn btn-success btn-sm mr-2";
+            }
+        }
+
+        if (statusEl) {
+            statusEl.innerHTML =
+                data.is_mlm_active
+                ? `<span class="badge badge-success">Active (Earning)</span>`
+                : `<span class="badge badge-danger">Inactive (No Income)</span>`;
+        }
+
+
+        handleImage("aadhaar_front_img", "no_front", data.aadhaar_front || data.kyc?.aadhaar_front);
+        handleImage("aadhaar_back_img", "no_back", data.aadhaar_back || data.kyc?.aadhaar_back);
+
+    })
+    .catch(() => showToast("Failed to load user data", "error"));
+}
+
+
+// 🔹 IMAGE HANDLER (UNCHANGED)
+function handleImage(imgId, fallbackId, url) {
+    const img = document.getElementById(imgId);
+    const fallback = document.getElementById(fallbackId);
+
+    if (url) {
+        img.src = url;
+        img.style.display = "block";
+        fallback.style.display = "none";
+    } else {
+        img.style.display = "none";
+        fallback.style.display = "block";
+    }
+}
+
+
+// 🔐 PASSWORD RESET (UNCHANGED)
+document.getElementById("passwordForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const newPassword = document.getElementById("new_password").value;
+    const confirmPassword = document.getElementById("confirm_password").value;
+
+    if (newPassword.length !== 6) {
+        showToast("Password must be exactly 6 characters", "warning");
+        return;
+    }
+
+    if (newPassword !== confirmPassword) {
+        showToast("Passwords do not match", "warning");
+        return;
+    }
+
+    showConfirm("Reset this user's password?", () => {
+
+        const btn = this.querySelector("button");
+        btn.disabled = true;
+        btn.innerText = "Resetting...";
+
+        fetch(`/api/accounts/admin/users/${id}/reset-password/`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify({ new_password: newPassword })
+        })
+        .then(async res => {
+            const data = await res.json();
+            if (!res.ok) throw new Error();
+
+            showToast("Password reset successfully", "success");
+
+            document.getElementById("new_password").value = "";
+            document.getElementById("confirm_password").value = "";
+        })
+        .catch(() => showToast("Password reset failed", "error"))
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerText = "Reset Password";
+        });
+
+    });
+});
+
+
+// 🔹 DATE FORMAT (UNCHANGED)
+function formatDate(d) {
+    if (!d) return "-";
+    return new Date(d).toLocaleDateString();
+}
+
+
+// 🔥 UPDATE USER (UNCHANGED)
+document.getElementById("userForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    showConfirm("Update this user?", () => {
+
+        const btn = this.querySelector("button");
+        btn.disabled = true;
+        btn.innerText = "Updating...";
+
+        const formData = new FormData();
+
+        formData.append("name", document.getElementById("name").value);
+        formData.append("phone", document.getElementById("phone").value);
+        formData.append("is_wallet_active", document.getElementById("wallet").value);
+        formData.append("is_approved", document.getElementById("approved").value);
+        formData.append("address", document.getElementById("address_input").value);
+
+        const front = document.getElementById("aadhaar_front_input").files[0];
+        const back = document.getElementById("aadhaar_back_input").files[0];
+
+        if (front) formData.append("aadhaar_front", front);
+        if (back) formData.append("aadhaar_back", back);
+
+        fetch(`/api/accounts/admin/users/${id}/`, {
+            method: "PUT",
+            headers: {
+                "Authorization": "Bearer " + token
+            },
+            body: formData
+        })
+        .then(async res => {
+            const data = await res.json();
+            if (!res.ok) throw new Error();
+
+            showToast("User updated successfully", "success");
+            loadUser();
+        })
+        .catch(() => showToast("Update failed", "error"))
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerText = "Update User";
+        });
+
+    });
+});
+
+
+// 🔹 INIT
+loadUser();
+
+</script>
+
+{% endblock %}

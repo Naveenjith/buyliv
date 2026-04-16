@@ -1,0 +1,312 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+
+
+<div class="container-fluid px-3 py-3">
+
+<!-- 🔥 HEADER -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="font-weight-bold mb-1">Earnings Dashboard</h3>
+        <small class="text-muted">Monitor payout commissions & transactions</small>
+    </div>
+
+    <button onclick="loadData()" class="btn btn-outline-primary btn-sm">
+        <i class="fas fa-sync-alt"></i> Refresh
+    </button>
+</div>
+
+
+<!-- 🔥 FILTER BAR -->
+<div class="card shadow-sm border-0 mb-4 filter-card">
+    <div class="card-body py-3">
+
+        <div class="row align-items-center">
+
+            <div class="col-md-3 mb-2">
+                <input type="text" id="userFilter" class="form-control form-control-sm"
+                       placeholder="🔍 User ID">
+            </div>
+
+            <div class="col-md-3 mb-2">
+                <input type="date" id="startDate" class="form-control form-control-sm">
+            </div>
+
+            <div class="col-md-3 mb-2">
+                <input type="date" id="endDate" class="form-control form-control-sm">
+            </div>
+
+            <div class="col-md-3 mb-2">
+                <button onclick="applyFilters()" class="btn btn-primary btn-sm w-100">
+                    Apply Filters
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+
+<!-- 🔥 TOTAL EARNINGS -->
+<div class="card border-0 mb-4 earnings-card shadow-sm">
+    <div class="card-body d-flex justify-content-between align-items-center px-4 py-3">
+
+        <div>
+            <small class="text-light opacity-75">Total Earnings</small>
+            <h1 id="totalEarnings" class="font-weight-bold mb-0">₹ 0.00</h1>
+        </div>
+
+        <div class="earn-icon">
+            <i class="fas fa-wallet"></i>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- 🔥 TABLE -->
+<div class="card border-0 shadow-sm">
+
+    <div class="card-header bg-white border-0 py-3">
+        <h6 class="mb-0 font-weight-bold">Transaction History</h6>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+
+            <thead class="table-head">
+                <tr>
+                    <th>Date</th>
+                    <th>User</th>
+                    <th>Amount</th>
+                    <th>Reference</th>
+                </tr>
+            </thead>
+
+            <tbody id="transactionTable">
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-4">
+                        Loading...
+                    </td>
+                </tr>
+            </tbody>
+
+        </table>
+    </div>
+
+    <!-- PAGINATION -->
+    <div class="card-footer bg-white border-0 d-flex justify-content-between">
+        <button id="prevBtn" class="btn btn-outline-secondary btn-sm">Prev</button>
+        <button id="nextBtn" class="btn btn-outline-secondary btn-sm">Next</button>
+    </div>
+
+</div>
+
+</div>
+</div>
+
+
+<style>
+/* 🔥 FORCE REMOVE ADMINLTE GAP */
+.content.px-3 {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.content-wrapper {
+    margin-left: 250px !important;
+    padding: 0 !important;
+}
+
+.content {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* remove container side spacing */
+.container-fluid {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+}
+
+
+/* 🔥 FILTER CARD */
+.filter-card {
+    border-radius: 10px;
+}
+
+/* 🔥 EARNINGS CARD */
+.earnings-card {
+    background: linear-gradient(135deg, #1f4037, #99f2c8);
+    color: #fff;
+    border-radius: 14px;
+}
+
+/* BIG NUMBER */
+.earnings-card h1 {
+    font-size: 32px;
+}
+
+/* ICON */
+.earn-icon {
+    font-size: 34px;
+    opacity: 0.6;
+}
+
+/* 🔥 TABLE HEADER */
+.table-head {
+    background: #f8f9fa;
+    font-size: 13px;
+    text-transform: uppercase;
+}
+
+/* 🔥 ROW HOVER */
+.table-hover tbody tr:hover {
+    background-color: #f4f6f9;
+}
+
+/* 🔥 CARD STYLE */
+.card {
+    border-radius: 12px;
+}
+
+/* 🔥 BADGE IMPROVEMENT */
+.badge-info {
+    background-color: #17a2b8;
+    font-weight: 500;
+}
+
+</style>
+
+
+<script>
+const token = localStorage.getItem("access");
+
+let nextUrl = null;
+let prevUrl = null;
+
+// FILTER URL
+function getFilters() {
+    const user = document.getElementById("userFilter").value.trim();
+    const start = document.getElementById("startDate").value;
+    const end = document.getElementById("endDate").value;
+
+    let url = "/api/wallet/payout/payout-earnings/?";
+
+    if (user) url += `user=${user}&`;
+    if (start) url += `start_date=${start}&`;
+    if (end) url += `end_date=${end}&`;
+
+    return url;
+}
+
+
+// LOAD DATA
+async function loadData(url = "/api/wallet/payout/payout-earnings/") {
+
+    const table = document.getElementById("transactionTable");
+
+    table.innerHTML = `
+        <tr>
+            <td colspan="4" class="text-center text-muted py-4">
+                Loading...
+            </td>
+        </tr>
+    `;
+
+    try {
+        const res = await fetch(url, {
+            headers: {
+                "Authorization": "Bearer " + token,
+                "Accept": "application/json"
+            }
+        });
+
+        const text = await res.text();
+
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch {
+            console.error("Invalid JSON:", text);
+            throw new Error("Invalid response");
+        }
+
+        const result = data.results || {};
+
+        const total = Number(result.total_earnings || 0).toLocaleString("en-IN", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+        document.getElementById("totalEarnings").innerText = "₹ " + total;
+
+        nextUrl = data.next;
+        prevUrl = data.previous;
+
+        renderTable(result.transactions || []);
+
+    } catch (err) {
+        table.innerHTML = `
+            <tr>
+                <td colspan="4" class="text-danger text-center py-4">
+                    Failed to load data
+                </td>
+            </tr>
+        `;
+    }
+}
+
+
+// RENDER TABLE
+function renderTable(transactions) {
+    const table = document.getElementById("transactionTable");
+    table.innerHTML = "";
+
+    if (!transactions.length) {
+        table.innerHTML = `
+            <tr>
+                <td colspan="4" class="text-center text-muted py-4">
+                    No transactions found
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    transactions.forEach(tx => {
+        table.innerHTML += `
+            <tr>
+                <td>${new Date(tx.date).toLocaleString()}</td>
+                <td><span class="badge badge-info">${tx.from_user || "-"}</span></td>
+                <td class="text-success font-weight-bold">₹ ${tx.amount}</td>
+                <td>${tx.description || "-"}</td>
+            </tr>
+        `;
+    });
+}
+
+
+// FILTER APPLY
+function applyFilters() {
+    loadData(getFilters());
+}
+
+
+// PAGINATION
+document.getElementById("nextBtn").onclick = () => {
+    if (nextUrl) loadData(nextUrl);
+};
+
+document.getElementById("prevBtn").onclick = () => {
+    if (prevUrl) loadData(prevUrl);
+};
+
+
+// INIT
+loadData();
+</script>
+
+{% endblock %}
