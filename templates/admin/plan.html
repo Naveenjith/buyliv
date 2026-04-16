@@ -236,9 +236,12 @@ document.getElementById("planForm").addEventListener("submit", function(e){
 
     // VALIDATION
     if (!payload.name) return showToast("Plan name required","error");
-    if (!payload.amount) return showToast("Enter valid amount","error");
-    if (payload.has_passive_income && !payload.passive_income_amount)
-        return showToast("Enter passive amount","error");
+    if (payload.amount === null || payload.amount === undefined || payload.amount < 0) {
+    return showToast("Enter valid amount","error");
+}
+    if (payload.has_passive_income && payload.passive_income_amount <= 0) {
+    return showToast("Enter passive amount","error");
+}
 
     let url = "/api/voucher/plans/";
     let method = "POST";
